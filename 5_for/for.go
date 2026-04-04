@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // for -> only contruct in loop for looping
 
 func main() {
@@ -28,8 +26,8 @@ func main() {
 	// 	println(i)
 	// }
 
-	for i := range 11 {
-		fmt.Println(i)
-	}
+	// for i := range 11 {
+	// 	fmt.Println(i)
+	// }
 
 }
