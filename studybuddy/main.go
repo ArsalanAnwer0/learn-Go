@@ -1,6 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type Topic struct {
 	Name       string
@@ -19,15 +25,13 @@ func addTopic(topics []Topic, name string, notes string) []Topic {
 	return topics
 }
 
-func markUnderstood(topics []Topic, name string) []Topic {
-	// if name is name in topic then like mark it as understood
-	for i, topic := range topics {
-		if topic.Name == name {
-			topics[i].Understood = true
-			break
-		}
+func markUnderstood(topicMap map[string]*Topic, name string) {
+	topic, exists := topicMap[name]
+	if exists {
+		topic.Understood = true
+	} else {
+		fmt.Printf("Topic '%s' not found.\n", name)
 	}
-	return topics
 }
 
 func listPendingTopics(topics []Topic) {
@@ -70,7 +74,7 @@ func listUnderstoodTopics(topics []Topic) {
 
 func understoodTopics(topics []Topic) []Topic {
 	var understood []Topic
-	// loop through topics and if topic is not understood then add it to pending slice
+	// loop through topics and if topic is understood then add it to understood slice
 	for _, topic := range topics {
 		if topic.Understood {
 			understood = append(understood, topic)
@@ -79,8 +83,17 @@ func understoodTopics(topics []Topic) []Topic {
 	return understood
 }
 
-func menu(topics *[]Topic) {
+func buildMap(topics []Topic) map[string]*Topic {
+	topicMap := make(map[string]*Topic)
+	for i := range topics {
+		topicMap[topics[i].Name] = &topics[i]
+	}
+	return topicMap
+}
+
+func menu(topics *[]Topic, topicMap map[string]*Topic) {
 	fmt.Println("Main Menu")
+	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println("\n1. List Topics")
 		fmt.Println("2. List Pending Topics")
@@ -90,7 +103,9 @@ func menu(topics *[]Topic) {
 		fmt.Println("6. Exit")
 		fmt.Println("Enter choice: ")
 		var choice int
-		fmt.Scanln(&choice)
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+		choice, _ = strconv.Atoi(input)
 		switch choice {
 		case 1:
 			// listTopics(topics)
@@ -103,21 +118,22 @@ func menu(topics *[]Topic) {
 			// listUnderstoodTopics(topics)
 			listUnderstoodTopics(*topics)
 		case 4:
-			// addTopic(topics)
 			fmt.Println("Enter Name: ")
-			var name string
-			fmt.Scanln(&name)
+			name, _ := reader.ReadString('\n')
+			name = strings.TrimSpace(name)
+
 			fmt.Println("Enter Notes: ")
-			var notes string
-			fmt.Scanln(&notes)
+			notes, _ := reader.ReadString('\n')
+			notes = strings.TrimSpace(notes)
 			*topics = addTopic(*topics, name, notes)
+			topicMap = buildMap(*topics)
 
 		case 5:
 			// mark topic as understood
 			fmt.Println("Enter Name: ")
-			var name string
-			fmt.Scanln(&name)
-			*topics = markUnderstood(*topics, name)
+			name, _ := reader.ReadString('\n')
+			name = strings.TrimSpace(name)
+			markUnderstood(topicMap, name)
 		case 6:
 			fmt.Println("Exiting Study Buddy. Happy Studying!")
 			return
@@ -130,6 +146,9 @@ func menu(topics *[]Topic) {
 }
 
 func main() {
+
+	topicMap := make(map[string]*Topic)
+
 	fmt.Println("Welcome to Study Buddy!")
 	// creating a slice
 	topics := []Topic{
@@ -137,5 +156,9 @@ func main() {
 		{Name: "Concurrency in Go", Understood: false, Notes: "Focus on goroutines and channels."},
 		{Name: "Error Handling", Understood: false, Notes: "Practice with custom error types."},
 	}
-	menu(&topics)
+
+	for i := range topics {
+		topicMap[topics[i].Name] = &topics[i]
+	}
+	menu(&topics, topicMap)
 }
