@@ -25,6 +25,24 @@ func addTopic(topics []Topic, name string, notes string) []Topic {
 	return topics
 }
 
+func deleteTopic(topics *[]Topic, topicMap *map[string]*Topic, name string) {
+	// check if topic exists in map
+	_, exists := (*topicMap)[name]
+	if !exists {
+		fmt.Printf("Topic '%s' not found.\n", name)
+		return
+	}
+	// if exists then delete from map and slice
+	delete((*topicMap), name)
+	for i, topic := range *topics {
+		if topic.Name == name {
+			*topics = append((*topics)[:i], (*topics)[i+1:]...)
+			break
+		}
+	}
+	*topicMap = buildMap(*topics)
+}
+
 func markUnderstood(topicMap map[string]*Topic, name string) {
 	topic, exists := topicMap[name]
 	if exists {
@@ -135,6 +153,11 @@ func menu(topics *[]Topic, topicMap map[string]*Topic) {
 			name = strings.TrimSpace(name)
 			markUnderstood(topicMap, name)
 		case 6:
+			fmt.Println("Enter Name: ")
+			name, _ := reader.ReadString('\n')
+			name = strings.TrimSpace(name)
+			deleteTopic(topics, &topicMap, name)
+		case 7:
 			fmt.Println("Exiting Study Buddy. Happy Studying!")
 			return
 
