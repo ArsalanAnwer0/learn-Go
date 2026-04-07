@@ -14,42 +14,53 @@ type Topic struct {
 	Notes      string
 }
 
+type StudyBuddy struct {
+	Topics   []Topic
+	TopicMap map[string]*Topic
+}
+
+func NewStudyBuddy() *StudyBuddy {
+	return &StudyBuddy{
+		Topics:   []Topic{},
+		TopicMap: make(map[string]*Topic),
+	}
+}
+
 func listTopics(topics []Topic) {
 	for _, topic := range topics {
 		fmt.Printf("- %s - Understood: %t\n   Notes: %s\n", topic.Name, topic.Understood, topic.Notes)
 	}
 }
 
-func addTopic(topics []Topic, name string, notes string) []Topic {
-	topics = append(topics, Topic{Name: name, Understood: false, Notes: notes})
-	return topics
+func (sb *StudyBuddy) AddTopic(name string, notes string) {
+	sb.Topics = append(sb.Topics, Topic{Name: name, Understood: false, Notes: notes})
+	sb.TopicMap[name] = &sb.Topics[len(sb.Topics)-1]
 }
 
-func deleteTopic(topics *[]Topic, topicMap *map[string]*Topic, name string) {
+func (sb *StudyBuddy) DeleteTopic(name string) error {
 	// check if topic exists in map
-	_, exists := (*topicMap)[name]
+	_, exists := sb.TopicMap[name]
 	if !exists {
-		fmt.Printf("Topic '%s' not found.\n", name)
-		return
+		return fmt.Errorf("Topic '%s' not found", name)
 	}
 	// if exists then delete from map and slice
-	delete((*topicMap), name)
-	for i, topic := range *topics {
+	delete(sb.TopicMap, name)
+	for i, topic := range sb.Topics {
 		if topic.Name == name {
-			*topics = append((*topics)[:i], (*topics)[i+1:]...)
+			sb.Topics = append(sb.Topics[:i], sb.Topics[i+1:]...)
 			break
 		}
 	}
-	*topicMap = buildMap(*topics)
+	return nil
 }
 
-func markUnderstood(topicMap map[string]*Topic, name string) {
-	topic, exists := topicMap[name]
-	if exists {
-		topic.Understood = true
-	} else {
-		fmt.Printf("Topic '%s' not found.\n", name)
+func (sb *StudyBuddy) MarkUnderstood(name string) error {
+	topic, exists := sb.TopicMap[name]
+	if !exists {
+		return fmt.Errorf("Topic '%s' not found", name)
 	}
+	topic.Understood = true
+	return nil // mark topic as understood in map and slice and return none
 }
 
 func listPendingTopics(topics []Topic) {
@@ -101,15 +112,7 @@ func understoodTopics(topics []Topic) []Topic {
 	return understood
 }
 
-func buildMap(topics []Topic) map[string]*Topic {
-	topicMap := make(map[string]*Topic)
-	for i := range topics {
-		topicMap[topics[i].Name] = &topics[i]
-	}
-	return topicMap
-}
-
-func menu(topics *[]Topic, topicMap map[string]*Topic) {
+func menu(sb *StudyBuddy) {
 	fmt.Println("Main Menu")
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -127,14 +130,14 @@ func menu(topics *[]Topic, topicMap map[string]*Topic) {
 		switch choice {
 		case 1:
 			// listTopics(topics)
-			listTopics(*topics)
+			listTopics(sb.Topics)
 		case 2:
 			// listPendingTopics(topics)
-			listPendingTopics(*topics)
+			listPendingTopics(sb.Topics)
 
 		case 3:
 			// listUnderstoodTopics(topics)
-			listUnderstoodTopics(*topics)
+			listUnderstoodTopics(sb.Topics)
 		case 4:
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
@@ -143,20 +146,25 @@ func menu(topics *[]Topic, topicMap map[string]*Topic) {
 			fmt.Println("Enter Notes: ")
 			notes, _ := reader.ReadString('\n')
 			notes = strings.TrimSpace(notes)
-			*topics = addTopic(*topics, name, notes)
-			topicMap = buildMap(*topics)
+			sb.AddTopic(name, notes)
 
 		case 5:
 			// mark topic as understood
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
 			name = strings.TrimSpace(name)
-			markUnderstood(topicMap, name)
+			err := sb.MarkUnderstood(name)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
 		case 6:
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
 			name = strings.TrimSpace(name)
-			deleteTopic(topics, &topicMap, name)
+			err := sb.DeleteTopic(name)
+			if err != nil {
+				fmt.Println("Error: ", err)
+			}
 		case 7:
 			fmt.Println("Exiting Study Buddy. Happy Studying!")
 			return
@@ -170,18 +178,13 @@ func menu(topics *[]Topic, topicMap map[string]*Topic) {
 
 func main() {
 
-	topicMap := make(map[string]*Topic)
+	sb := NewStudyBuddy()
 
 	fmt.Println("Welcome to Study Buddy!")
 	// creating a slice
-	topics := []Topic{
-		{Name: "Go Basics", Understood: false, Notes: "Need to review slices and maps."},
-		{Name: "Concurrency in Go", Understood: false, Notes: "Focus on goroutines and channels."},
-		{Name: "Error Handling", Understood: false, Notes: "Practice with custom error types."},
-	}
+	sb.AddTopic("Go Basics", "Need to review slices and maps.")
+	sb.AddTopic("Concurrency in Go", "Focus on goroutines and channels.")
+	sb.AddTopic("Error Handling", "Practice with custom error types.")
 
-	for i := range topics {
-		topicMap[topics[i].Name] = &topics[i]
-	}
-	menu(&topics, topicMap)
+	menu(sb)
 }
