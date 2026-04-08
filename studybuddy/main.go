@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -14,6 +15,13 @@ type Topic struct {
 	Notes      string
 }
 
+type Storage interface {
+	AddTopic(name string, notes string)
+	DeleteTopic(name string) error
+	MarkUnderstood(name string) error
+	ListAll() []Topic
+}
+
 type StudyBuddy struct {
 	Topics   []Topic
 	TopicMap map[string]*Topic
@@ -24,6 +32,10 @@ func NewStudyBuddy() *StudyBuddy {
 		Topics:   []Topic{},
 		TopicMap: make(map[string]*Topic),
 	}
+}
+
+func (sb *StudyBuddy) ListAll() []Topic {
+	return sb.Topics
 }
 
 func listTopics(topics []Topic) {
@@ -112,7 +124,34 @@ func understoodTopics(topics []Topic) []Topic {
 	return understood
 }
 
-func menu(sb *StudyBuddy) {
+func saveTopics(topics []Topic) error {
+	data, err := json.Marshal(topics)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("topics.json", data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadTopics() ([]Topic, error) {
+	// read the file
+	data, err := os.ReadFile("topics.json")
+	if err != nil {
+		return []Topic{}, nil // file does not exist yet, return
+	}
+	// unmarshal JSON bytes back into a slice
+	var topics []Topic
+	err = json.Unmarshal(data, &topics)
+	if err != nil {
+		return nil, err
+	}
+	return topics, nil
+}
+
+func menu(st Storage) {
 	fmt.Println("Main Menu")
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -121,7 +160,8 @@ func menu(sb *StudyBuddy) {
 		fmt.Println("3. List Understood Topics")
 		fmt.Println("4. Add Topic")
 		fmt.Println("5. Mark Topic as Understood")
-		fmt.Println("6. Exit")
+		fmt.Println("6. Delete Topic")
+		fmt.Println("7. Save and Exit")
 		fmt.Println("Enter choice: ")
 		var choice int
 		input, _ := reader.ReadString('\n')
@@ -130,14 +170,14 @@ func menu(sb *StudyBuddy) {
 		switch choice {
 		case 1:
 			// listTopics(topics)
-			listTopics(sb.Topics)
+			listTopics(st.ListAll())
 		case 2:
 			// listPendingTopics(topics)
-			listPendingTopics(sb.Topics)
+			listPendingTopics(st.ListAll())
 
 		case 3:
 			// listUnderstoodTopics(topics)
-			listUnderstoodTopics(sb.Topics)
+			listUnderstoodTopics(st.ListAll())
 		case 4:
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
@@ -146,29 +186,33 @@ func menu(sb *StudyBuddy) {
 			fmt.Println("Enter Notes: ")
 			notes, _ := reader.ReadString('\n')
 			notes = strings.TrimSpace(notes)
-			sb.AddTopic(name, notes)
+			st.AddTopic(name, notes)
 
 		case 5:
 			// mark topic as understood
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
 			name = strings.TrimSpace(name)
-			err := sb.MarkUnderstood(name)
+			err := st.MarkUnderstood(name)
 			if err != nil {
 				fmt.Println("Error: ", err)
 			}
 		case 6:
+			// delete topic
 			fmt.Println("Enter Name: ")
 			name, _ := reader.ReadString('\n')
 			name = strings.TrimSpace(name)
-			err := sb.DeleteTopic(name)
+			err := st.DeleteTopic(name)
 			if err != nil {
 				fmt.Println("Error: ", err)
 			}
 		case 7:
+			err := saveTopics(st.ListAll())
+			if err != nil {
+				fmt.Println("Error saving: ", err)
+			}
 			fmt.Println("Exiting Study Buddy. Happy Studying!")
 			return
-
 		default:
 			fmt.Println("Invalid choice, please try again.")
 			continue
@@ -178,13 +222,25 @@ func menu(sb *StudyBuddy) {
 
 func main() {
 
-	sb := NewStudyBuddy()
+	sb := NewStudyBuddy() // an empty StudyBuddy
+	// try to load saved topics
+	topics, err := loadTopics()
+	if err != nil {
+		fmt.Println("Error loading topics: ", err)
+	}
 
-	fmt.Println("Welcome to Study Buddy!")
-	// creating a slice
-	sb.AddTopic("Go Basics", "Need to review slices and maps.")
-	sb.AddTopic("Concurrency in Go", "Focus on goroutines and channels.")
-	sb.AddTopic("Error Handling", "Practice with custom error types.")
+	if len(topics) == 0 {
+		// first time running, no file exists yet — add defaults
+		sb.AddTopic("Go Basics", "Need to review slices and maps.")
+		sb.AddTopic("Concurrency in Go", "Focus on goroutines and channels.")
+		sb.AddTopic("Error Handling", "Practice with custom error types.")
+	} else {
+		// file exists then load topics directly
+		sb.Topics = topics
+		for i := range sb.Topics {
+			sb.TopicMap[sb.Topics[i].Name] = &sb.Topics[i]
+		}
+	}
 
 	menu(sb)
 }
