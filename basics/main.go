@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -127,4 +128,30 @@ func main() {
 	fmt.Println("Vegy list is ", vegList)
 	fmt.Println("Vegy list is ", len(vegList))
 
+	// slices
+	fmt.Println("Welcome to class on slices")
+	var fruitList = []string{"Apple", "Tomato", "Peach"}
+	fmt.Printf("Type of fruitlist if %T \n", fruitList)
+	fruitList = append(fruitList, "Mango", "Banana")
+	fmt.Println(fruitList)
+
+	fruitList = append(fruitList[1:3])
+	fmt.Println(fruitList)
+
+	highScores := make([]int, 4)
+
+	highScores[0] = 234
+	highScores[1] = 345
+	highScores[2] = 887
+	highScores[3] = 953
+
+	fmt.Println(highScores)
+
+	highScores = append(highScores, 345, 5435, 45353) // append does dynamic memory
+
+	fmt.Println(highScores)
+
+	sort.Ints(highScores)
+
+	fmt.Println(sort.IntsAreSorted(highScores))
 }
