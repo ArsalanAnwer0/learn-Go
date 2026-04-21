@@ -15,19 +15,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const LoginToken string = "blah" // capital L -> public variable
 
 func main() {
-	// fmt.Println("Arsalan")
+	fmt.Println("Arsalan")
 
 	// variables:
 	var username string = "Arsalan"
@@ -135,7 +129,7 @@ func main() {
 	fruitList = append(fruitList, "Mango", "Banana")
 	fmt.Println(fruitList)
 
-	fruitList = append(fruitList[1:3])
+	fruitList = append(fruitList[1:3], "yo")
 	fmt.Println(fruitList)
 
 	highScores := make([]int, 4)
@@ -154,4 +148,40 @@ func main() {
 	sort.Ints(highScores)
 
 	fmt.Println(sort.IntsAreSorted(highScores))
+
+	how to remove a value from slice based on index
+	var courses = []string{"reactjs", "javascript", "swift", "python", "ruby"}
+	fmt.Println(courses)
+	var index int = 2
+	courses = append(courses[:index], courses[index+1:]...)
+	fmt.Println(courses)
+
+	maps -> hashmaps
+	key value pairs
+
+	fmt.Println("Maps in Golang")
+
+	languages := make(map[string]string)
+
+	languages["JS"] = "Javascript"
+	languages["RB"] = "Ruby"
+	languages["PY"] = "Python"
+
+	fmt.Println("List of all languages: ", languages)
+	fmt.Println("JS shorts for: ", languages["JS"])
+
+	// Delete from maps
+	delete(languages, "RB")
+
+	fmt.Println("List of all languages: ", languages)
+
+	// loops are interesting in golang
+
+	for _, value := range languages {
+		fmt.Printf("For Key v, value is %v \n", value)
+	}
+
+	// structs in golang
+	// 
+
 }
