@@ -93,4 +93,22 @@ func main() {
 	fmt.Println(createdDate)
 	fmt.Println(createdDate.Format("01-02-2006 15:04:05 Monday"))
 
+	// memory management allocation and deallocation happens automatically
+	// two methods
+	// new() -> allocate memory but no INIT, get memory address, zeroed storage -> no data
+	// make()-> allocate memory and INIT, get memory address, non-zeroed storage -> data
+	// Garbage Collection happens automatically,
+	// what is runtime package -> CPU available..
+
+	// Pointers
+	fmt.Println("Welcome to a class on pointers")
+
+	var num int = 5
+	var ptr *int = &num
+	var ptr2 = &num
+	*ptr = *ptr * 2
+	fmt.Println("Value of pointer is: ", *ptr)
+	fmt.Println("Value of pointer is: ", *ptr2)
+	fmt.Println("Value of num is: ", num)
+
 }
